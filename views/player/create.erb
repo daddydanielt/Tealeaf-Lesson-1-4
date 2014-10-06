@@ -1,0 +1,23 @@
+
+<div>
+<form class="form-inline" role="form" action='/player/create' method="POST">
+  <h1>Before we start to play <strong>Blackjack</strong> game, please tell me your name 
+    <input type="text" id="player_name" name="player_name" class="form-control"    
+    placeholder="Hi, nice to meet you ^_^." required="true" autofocus="true" >
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </h1>
+</form>
+</div>
+
+
+
+
+
+<script> 
+$( document ).ready(function() {    
+    //reset input field value
+    $("#player_name").val('')
+});
+
+
+</script>

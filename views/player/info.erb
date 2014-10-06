@@ -1,0 +1,11 @@
+<div >
+<h1><span style="color:blue"><strong><%= @player_name %>'s</strong></span> Gambling History</h1>
+<p> Account: <span style="color:green">$<%= @account %><span> </p>
+<p> Win: <span style="color:green"><%= @count_win %></span> times</p>
+<p> Lose: <span style="color:green"><%= @count_lose %></span> times</p>
+<p> Draw: <span style="color:green"><%= @count_draw %></span> times</p>
+<!-- <input class="btn btn-default btn-xs" type="button" value="Back" onclick="window.history.back(); "> -->
+<input class="btn btn-default btn-xs" type="button" value="Back_to_Game" onclick="window.location='/game'"> 
+</div>
+
+

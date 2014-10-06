@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>My First App</title>
+    <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">    
+    <link rel="stylesheet" href="/application.css">
+    <!-- Google Fonts-->
+    <link href='http://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lobster|Gloria+Hallelujah' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Maven+Pro' rel='stylesheet' type='text/css'>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="/vendor/bootstrap/js/bootstrap.min.js"></script>
+  </head>
+  <body style="padding-top: 60px;">
+
+  <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+  <div class="container-fluid">    
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+       <ul class="nav navbar-nav">        
+        <li><a href="/player">Profile</a></li>
+        <li><a href="#" data-toggle="modal" data-target="#myModal">Start_a_new_game</a></li>
+      </ul>
+    </div>
+  </div>
+  </nav>
+
+  <!-- Small modal -->  
+  <div class="modal fade bs-example-modal-sm" id='myModal' tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">      
+        <div class="modal-body">
+          <p>Reset all of your gambling history, <br/> are you really sure to do it?</p>
+        </div>
+        <div class="modal-footer">          
+          <button type="button" class="btn btn-link" data-dismiss="modal">Cancle</button>
+          <button type="button" class="btn btn-link" onclick="window.location='/game/init'">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <%if @error %>
+      <div class="alert alert-error"><%=@error%></div>
+    <% end %>  
+    <%= yield %>
+  </div>
+
+
+</nav>
+  </body>
+</html>

@@ -2,12 +2,12 @@ require 'rubygems'
 require 'sinatra'
 require 'pry' 
 
-#
-#use Rack::Session::Cookie, :key => 'rack.session',
-#                           :path => '/',
-#                           :secret => 'your_secret' 
-set :sessions, true
-set :session_secret, 'This is a secret key'
+
+use Rack::Session::Cookie, :key => 'rack.session',
+                           :path => '/',
+                           :secret => 'your_secret' 
+#set :sessions, true
+#set :session_secret, 'This is a secret key'
   
 class Card 
   COVER ="/images/cards/cover.jpg" 

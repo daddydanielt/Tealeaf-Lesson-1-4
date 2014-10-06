@@ -5325,6 +5325,7 @@ a.list-group-item-danger.active:focus {
 .embed-responsive.embed-responsive-4by3 {
   padding-bottom: 75%;
 }
+
 .well {
   min-height: 20px;
   padding: 19px;
@@ -5347,6 +5348,11 @@ a.list-group-item-danger.active:focus {
   padding: 9px;
   border-radius: 3px;
 }
+
+.well-active{
+  border-color: red;  
+}
+
 .close {
   float: right;
   font-size: 21px;

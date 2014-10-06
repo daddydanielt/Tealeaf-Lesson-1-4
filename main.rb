@@ -305,6 +305,7 @@ get '/game/welcome' do
     #halt erb(:'player/create')
     redirect 'player'
   else
+    initial_game(true)
     @player_name = session[:player_name]
     @account = session[:account]
     erb :'game/welcome'

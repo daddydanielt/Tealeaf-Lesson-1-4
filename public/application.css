@@ -2,8 +2,8 @@ body {
 
   font-family: 'Maven Pro', sans-serif;
 }
-
-.blackjack, .twentyone, .bursted {
+  
+.blackjack, .twentyone, .busted {
   color: red;
   font-weight: bold;
 }

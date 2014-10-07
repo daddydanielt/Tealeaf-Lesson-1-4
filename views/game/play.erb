@@ -1,15 +1,14 @@
-
 <div class="panel panel-default" >   
   <div class="panel-body">
     
-     <!-- Dealer -->
+    <!-- Dealer -->
     <div class='well well-sm'>
-      <h3><span class="label label-default">Delear</span></h3>      
-      <%= Game::Delear_picture %>      
+      <h3><span class="label label-default">Dealer</span></h3>      
+      <%= Game::Dealer_picture %>      
        
-      <% if @delear_hand %>               
-        <% @delear_hand.each_with_index do |card,i| %>                     
-          <% if is_delear_turn? %>
+      <% if @dealer_hand %>               
+        <% @dealer_hand.each_with_index do |card,i| %>                     
+          <% if is_dealer_turn? %>
             <!-- # display all cards-->
             <% src = Card.to_img_src(card) %>    
           <% else %>
@@ -20,14 +19,14 @@
         <% end %>
       <% end %>
       
-      <% if @delear_total && @delear_hand && is_delear_turn? %>          
+      <% if @dealer_total && @dealer_hand && is_dealer_turn? %>          
         <div style='padding-top:5px;'>
-          <span class="label label-info">Total = <%= @delear_total.to_s %></span>
-          <% if @delear_cards_status &&  !@delear_cards_status.empty? %>
+          <span class="label label-info">Total = <%= @dealer_total.to_s %></span>
+          <% if @dealer_cards_status &&  !@dealer_cards_status.empty? %>
           <div style='padding-top:5px'>
-          <% if is_blackjack?(@delear_hand) %> <span class="blackjack">BlackJack!</span></p>
-          <% elsif is_twentyone?(@delear_hand) %> <span class="twentyone">TwentyOne!</span></p>                       
-          <% elsif is_bursted?(@delear_hand) %> <span class="bursted">Bursted!</span></p>                 
+          <% if is_blackjack?(@dealer_hand) %> <span class="blackjack">BlackJack!</span></p>
+          <% elsif is_twentyone?(@dealer_hand) %> <span class="twentyone">TwentyOne!</span></p>                       
+          <% elsif is_busted?(@dealer_hand) %> <span class="busted">Busted!</span></p>                 
           <% end %>
           </div>
           <% end %>
@@ -39,7 +38,9 @@
     <div class='well well-sm well-active'>    
     <!--[account]-->       
       <h3><span class="label label-default"><%= @player_name %></span> 
-          <span class='label label-primary'>Money =  $<%= @account %></span></h3>            
+          <span class='label label-primary'>Bet =  $<%= Game::Bet %></span>
+          <span class='label label-warning'>Money =  $<%= @account %></span>
+        </h3>            
       <% if @player_hand %>       
         <% @player_hand.each_with_index do |card,i| %>     
         <% src = Card.to_img_src(card) %>               
@@ -70,14 +71,14 @@
           <div style='padding-top:5px'>
           <% if is_blackjack?(@player_hand) %> <span class="blackjack">BlackJack!</span></p>
           <% elsif is_twentyone?(@player_hand) %> <span class="twentyone">TwentyOne!</span></p>                       
-          <% elsif is_bursted?(@player_hand) %> <span class="bursted">Bursted!</span></p>        
+          <% elsif is_busted?(@player_hand) %> <span class="busted">Busted!</span></p>        
           <% elsif !@player_stay %>              
             <div style='height:30px;'>          
               <form id="hit_form" action="/player/hit" method="post">
-                <input class="btn btn-default btn-xs" type="submit" value="hit" />
+                <input class="btn btn-default btn-s" type="submit" value="hit" />
               </form>        
               <form id="stay_form" action="/player/stay" method="post">
-                <input class="btn btn-default btn-xs" type="submit" value="stay" />
+                <input class="btn btn-default btn-s" type="submit" value="stay" />
               </form>
             </div>
           <% end %>
@@ -100,66 +101,3 @@
   </div>
 </div>
 
-
-
-<% if (false) %>
-
-<!--[debug]-->
-<div class="panel panel-default" >
-  <div class="panel-heading">
-    <h3 class="panel-title">Deck</h3>
-  </div>
-  <div class="panel-body">
-  
-  <% if @deck %>    
-    <% @deck.each_with_index do |card,i| %>
-      <% if (i+1) % 13 == 1 %>
-        <br/>
-      <% end %>
-      <% src = Card.to_img_src(card) %>    
-      <% src = Card::COVER %>      
-      <img src="<%= src %>" width="30"/>
-      <% if (i+1) % 13 == 0 ||  ((i+1) == @deck.count && (i+1) % 13 !=0) %>
-        <br/>
-      <% end %>      
-    <% end %>
-  <% end %>
-  </div>
-</div>
-
-<!--[debug]-->
-
-<% if @delear_hand && @player_hand %>
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">Hands</h3>
-  </div>
-  <div class="panel-body">
-    <h3>delear hand</h3>
-    <%= @delear_hand.inspect %>    
-    <h3>player hand</h3>
-    <%= @player_hand.inspect %>    
-  </div>
-</div>
-
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">Deck</h3>
-  </div>
-  <div class="panel-body">
-    <!--[debug]-->
-  <% @deck.each_with_index do |e,i| %>
-    <% if (i+1) % 13 == 1 %>
-    <%= "<div class='well'>" %>
-    <% end %>
-    <%   s = e[0].downcase %>
-    <%   n = e[1].downcase %>
-    <span> [<%=s%>-<%=n%>] </span>
-    <% if (i+1) % 13 == 0 %>
-    <%= "</div>" %>
-    <% end %>
-  <% end %>
-  </div>
-</div>
-<% end %>
-<% end %>

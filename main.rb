@@ -42,7 +42,7 @@ class Deck
 end
 
 class Game
-  Delear_picture = "<img src='http://www.gravatar.com/avatar/7591cadea2328c5362c032df51246020' alt='delear picture' class='img-circle'/>"
+  Dealer_picture = "<img src='http://www.gravatar.com/avatar/7591cadea2328c5362c032df51246020' alt='dealer picture' class='img-circle'/>"
   Bet = 100
 end
 
@@ -81,9 +81,9 @@ helpers do
     session[:player_hand]=[]
     2.times { session[:player_hand] << Deck.flick_a_card!(session[:deck]) }
     
-    # deale cards - to delear
-    session[:delear_hand]=[]
-    2.times { session[:delear_hand] << Deck.flick_a_card!(session[:deck]) }
+    # deale cards - to dealer
+    session[:dealer_hand]=[]
+    2.times { session[:dealer_hand] << Deck.flick_a_card!(session[:deck]) }
 
     session[:player_stay] = false
   end
@@ -127,7 +127,7 @@ helpers do
     my_hand.count > 2 && calculate_total(my_hand) == 21
   end
   
-  def is_bursted?(my_hand)      
+  def is_busted?(my_hand)      
     return false if !my_hand
     calculate_total(my_hand) > 21
   end
@@ -142,8 +142,8 @@ helpers do
       "blackjack"
     elsif is_twentyone?(my_hand) 
       "twentyone"
-    elsif is_bursted?(my_hand)
-      "bursted"
+    elsif is_busted?(my_hand)
+      "busted"
     elsif is_total_over_17?(my_hand)
       "total_over_17"
     else
@@ -151,12 +151,13 @@ helpers do
     end
   end
 
-  def is_delear_turn?        
-    (@player_stay || is_bursted?(@player_hand) || is_blackjack?(@player_hand) || is_twentyone?(@player_hand)) ? true : false      
+  def is_dealer_turn?        
+    (@player_stay || is_busted?(@player_hand) || is_blackjack?(@player_hand) || is_twentyone?(@player_hand)) ? true : false      
   end
 
-  def player_win_draw_lose(player_hand,delear_hand)    
-    if is_blackjack?(delear_hand)
+
+  def player_win_draw_lose(player_hand,dealer_hand)    
+    if is_blackjack?(dealer_hand)
       if is_blackjack?(player_hand)
        return 0
       else
@@ -164,7 +165,7 @@ helpers do
       end
     end
 
-    if is_twentyone?(delear_hand)
+    if is_twentyone?(dealer_hand)
       if is_blackjack?(player_hand)
         return 1
       elsif is_twentyone?(player_hand)
@@ -174,23 +175,23 @@ helpers do
       end        
     end
 
-    if is_bursted?(delear_hand)
-      if is_bursted?(player_hand)
+    if is_busted?(dealer_hand)
+      if is_busted?(player_hand)
         return 0
       else
         return 1
       end
     end
 
-    if (calculate_total(delear_hand) < 21)
-      if is_bursted?(player_hand)
+    if (calculate_total(dealer_hand) < 21)
+      if is_busted?(player_hand)
         return -1
       elsif (is_blackjack?(player_hand) || is_twentyone?(player_hand))
         return 1
       else
-        return -1 if (calculate_total(delear_hand) > calculate_total(player_hand)) 
-        return 0 if (calculate_total(delear_hand) == calculate_total(player_hand)) 
-      return 1 if (calculate_total(delear_hand) < calculate_total(player_hand)) 
+        return -1 if (calculate_total(dealer_hand) > calculate_total(player_hand)) 
+        return 0 if (calculate_total(dealer_hand) == calculate_total(player_hand)) 
+      return 1 if (calculate_total(dealer_hand) < calculate_total(player_hand)) 
       end
     end
   end
@@ -226,7 +227,7 @@ end
 post '/player/hit' do 
   @player_hand = session[:player_hand]
   hit_card(@player_hand)      
-  if is_bursted?(@player_hand) || is_blackjack?(@player_hand) || is_twentyone?(@player_hand) 
+  if is_busted?(@player_hand) || is_blackjack?(@player_hand) || is_twentyone?(@player_hand) 
     session[:player_stay] = true
   end
   redirect :'game'
@@ -244,34 +245,33 @@ get '/game' do
 
   @deck = session[:deck]    
   @player_hand = session[:player_hand]     
-  @delear_hand = session[:delear_hand]      
-  redirect '/game/init' if !@deck || !@player_hand || !@delear_hand
+  @dealer_hand = session[:dealer_hand]      
+  redirect '/game/init' if !@deck || !@player_hand || !@dealer_hand
 
   @player_total = calculate_total(@player_hand)    
   @player_cards_status= get_cards_status(@player_hand) unless !@player_hand
   @player_stay = session[:player_stay]
         
-  # check if it's delear's turn or not
-  if is_delear_turn?            
-      while true
-        @delear_cards_status= get_cards_status(@delear_hand) unless !@delear_hand          
-        if @delear_cards_status.empty?
-          #delear_auto_hit_cards(@delear_hand)
-          hit_card(@delear_hand)      
+  # check if it's dealer's turn or not
+  if is_dealer_turn?            
+      while true 
+        @dealer_cards_status= get_cards_status(@dealer_hand) unless !@dealer_hand          
+        if !( is_busted?(@player_hand) || is_blackjack?(@player_hand) ) && @dealer_cards_status.empty?           
+          hit_card(@dealer_hand)      
         else
           break
         end
       end         
-      @delear_total = calculate_total(@delear_hand)          
+      @dealer_total = calculate_total(@dealer_hand)          
             
-      # handle cards comparision of both delear and player in erb.
+      # handle cards comparision of both dealer and player in erb.
       if session[:player_win_or_lose] && session[:player_win_or_lose].empty?         
-        case player_win_draw_lose(@player_hand,@delear_hand)
+        case player_win_draw_lose(@player_hand,@dealer_hand)
         when 0
           session[:player_win_or_lose]  = "Draw game."
           session[:count_draw] += 1
-        when 1
-          session[:player_win_or_lose]  = "Congradulation, you win!"
+        when 1 
+          session[:player_win_or_lose]  = "Congratulation, you win!"
           session[:account] += Game::Bet
           session[:count_win] += 1
         when -1
@@ -295,7 +295,7 @@ end
 
 get '/game/play_again' do
   session[:press_play_again] = true
-  session[:is_delear_checked] = false
+  session[:is_dealer_checked] = false
   initial_game
   redirect :'game'
 end

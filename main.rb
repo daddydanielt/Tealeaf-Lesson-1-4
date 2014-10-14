@@ -280,7 +280,7 @@ get '/player' do
   if !@player_name || @player_name.empty?      
       erb :'player/create'
   else
-      erb :'player/info'
+      redirect '/game'
   end
 end
 

@@ -393,7 +393,7 @@ post '/game/play_again' do
   game_info = game_info_refresh
   @player_game_status = game_info[:player_game_status]
   @dealer_game_status = game_info[:dealer_game_status]
-  @player_win_or_lose = game_info[:player_win_or_lose] 
+  @player_win_or_lose = game_info[:player_win_or_lose]   
   erb :'game/play'  
 end
 

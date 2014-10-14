@@ -1,17 +1,25 @@
 <div class="panel panel-default" id="game_screen">   
   <div class="panel-body">    
-    
+        
     <!-- Dealer -->
     <div class='well well-sm' id='dealer_well_div'>
-      <% if !(!@player_game_status.bet || (@player_game_status.bet <= 0) || (@player_game_status.bet > @player_game_status.account)) %>
-        <%= erb :'game/dealer_game_status', :layout => false %>                        
+      <% if !(!@player_game_status.bet || (@player_game_status.bet <= 0) || (@player_game_status.bet > @player_game_status.account)) %>    
+          <%= erb :'game/dealer_game_status', :layout => false %>                                
       <% end %>
     </div>
 
     <!-- Player -->
     <div class='well well-sm well-active' id='player_well_div' style=" height:320px;">            
-        <% if !@player_game_status.bet || (@player_game_status.bet <= 0) || (@player_game_status.bet > @player_game_status.account) %>
-          <%= erb :'game/place_bet' %>
+        <% if !@player_game_status.bet || (@player_game_status.bet <= 0) || (@player_game_status.bet > @player_game_status.account) %>          
+          
+          <% if @player_game_status.account <=0 %>
+            <div style="text-align:center">
+              <h1> Oh~ poor child, you've losed all of your money.</h1>              
+            </div>            
+          <% else %>
+            <%= erb :'game/place_bet' %>
+          <% end %>
+
         <% else %>          
           
           <%= erb :'game/player_game_status', :layout => false %>                

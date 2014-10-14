@@ -1,103 +1,32 @@
-<div class="panel panel-default" >   
-  <div class="panel-body">
+<div class="panel panel-default" id="game_screen">   
+  <div class="panel-body">    
     
     <!-- Dealer -->
-    <div class='well well-sm'>
-      <h3><span class="label label-default">Dealer</span></h3>      
-      <%= Game::Dealer_picture %>      
-       
-      <% if @dealer_hand %>               
-        <% @dealer_hand.each_with_index do |card,i| %>                     
-          <% if is_dealer_turn? %>
-            <!-- # display all cards-->
-            <% src = Card.to_img_src(card) %>    
-          <% else %>
-            <!-- # The first card needs to be covered. -->
-            <% src = (i== 0 ? Card::COVER  : Card.to_img_src(card)) %>    
-          <% end %>            
-          <img src="<%= src %>" width="50"/>   
-        <% end %>
+    <div class='well well-sm' id='dealer_well_div'>
+      <% if !(!@player_game_status.bet || (@player_game_status.bet <= 0) || (@player_game_status.bet > @player_game_status.account)) %>
+        <%= erb :'game/dealer_game_status', :layout => false %>                        
       <% end %>
-      
-      <% if @dealer_total && @dealer_hand && is_dealer_turn? %>          
-        <div style='padding-top:5px;'>
-          <span class="label label-info">Total = <%= @dealer_total.to_s %></span>
-          <% if @dealer_cards_status &&  !@dealer_cards_status.empty? %>
-          <div style='padding-top:5px'>
-          <% if is_blackjack?(@dealer_hand) %> <span class="blackjack">BlackJack!</span></p>
-          <% elsif is_twentyone?(@dealer_hand) %> <span class="twentyone">TwentyOne!</span></p>                       
-          <% elsif is_busted?(@dealer_hand) %> <span class="busted">Busted!</span></p>                 
-          <% end %>
-          </div>
-          <% end %>
-        </div>
-      <% end %>                          
     </div>
 
     <!-- Player -->
-    <div class='well well-sm well-active'>    
-    <!--[account]-->       
-      <h3><span class="label label-default"><%= @player_name %></span> 
-          <span class='label label-primary'>Bet =  $<%= Game::Bet %></span>
-          <span class='label label-warning'>Money =  $<%= @account %></span>
-        </h3>            
-      <% if @player_hand %>       
-        <% @player_hand.each_with_index do |card,i| %>     
-        <% src = Card.to_img_src(card) %>               
-          <% if (i == @player_hand.count - 1) %>            
-            <img id="player_card_last_one" src="<%= src %>" width="50"/>               
-          <% else %>
-            <img src="<%= src %>" width="50"/>   
+    <div class='well well-sm well-active' id='player_well_div' style=" height:320px;">            
+        <% if !@player_game_status.bet || (@player_game_status.bet <= 0) || (@player_game_status.bet > @player_game_status.account) %>
+          <%= erb :'game/place_bet' %>
+        <% else %>          
+          
+          <%= erb :'game/player_game_status', :layout => false %>                
+          
+          <!-- Game Result -->
+          <div id="game_result">                    
+          <% if @player_game_status.is_player_hit_stay? \
+            || @player_game_status.is_blackjack? \
+            || @player_game_status.is_twentyone? \
+            || @player_game_status.is_busted?  %>
+            <%= erb :'game/game_result', :layout => false %>
           <% end %>
-        <% end %>
-        
-        <script>                                        
-            $( document ).ready(function() {             
+          </div>   
 
-              $("#player_card_last_one").hide();
-              $("#player_cards_total").hide();
-              $("#player_msg").hide();
-
-              $("#player_card_last_one").fadeIn(1000, function(){              
-                $("#player_cards_total").fadeIn(200);
-                $("#player_msg").fadeIn(200)
-              });
-            });            
-        </script>
-
-        <% if @player_total %>
-        <div id="player_cards_total" style='padding-top:5px;'>
-          <span class="label label-info">Total = <%= @player_total.to_s %></span>
-          <div style='padding-top:5px'>
-          <% if is_blackjack?(@player_hand) %> <span class="blackjack">BlackJack!</span></p>
-          <% elsif is_twentyone?(@player_hand) %> <span class="twentyone">TwentyOne!</span></p>                       
-          <% elsif is_busted?(@player_hand) %> <span class="busted">Busted!</span></p>        
-          <% elsif !@player_stay %>              
-            <div style='height:30px;'>          
-              <form id="hit_form" action="/player/hit" method="post">
-                <input class="btn btn-default btn-s" type="submit" value="hit" />
-              </form>        
-              <form id="stay_form" action="/player/stay" method="post">
-                <input class="btn btn-default btn-s" type="submit" value="stay" />
-              </form>
-            </div>
-          <% end %>
-          </div>
-        </div>
         <% end %>      
-      <% end %>
-      
-      <% if @player_total && @player_hand %>        
-        <% if @player_win_or_lose %>
-          <div id= "player_msg" class="alert alert-warning" role="alert">          
-          <p><strong><%= @player_win_or_lose %></strong></p>
-          <p><button type="button" class="btn btn-default btn-xs" onclick="window.location.href='game/play_again'">
-            Play again</button></p>
-          </div>                          
-        <% end %>        
-      <% end %>            
-    </div>
-
-  </div>
+    </div> 
+  </div>  
 </div>
-

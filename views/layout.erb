@@ -8,8 +8,9 @@
     <link href='http://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Lobster|Gloria+Hallelujah' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Maven+Pro' rel='stylesheet' type='text/css'>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>    
     <script src="/vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/application.js"> </script>
   </head>
   <body style="padding-top: 60px;">
 
@@ -17,32 +18,17 @@
   <div class="container-fluid">    
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">        
-        <% @nav_class ='' %>
-        <% if !@player_name || @player_name.empty? %>
-        <%  @nav_class ='disabled'%>
-        <% end %>
-        <li class='<%= @nav_class %>'><a href="/player">Profile</a></li>
-        <li class='<%= @nav_class %>'><a href="#" data-toggle="modal" data-target="#myModal">Start_a_new_game</a></li>
+        <% #@nav_class ='' %>
+        <% #if !@player_name || @player_name.empty? %>
+        <% # @nav_class ='disabled'%>
+        <% #end %>        
+        <!-- <li><a href="/player">Profile</a></li> -->
+        <li><a href="/game/start_a_new_game" id="link_start_a_new_ga">Start_a_new_game</a></li>
       </ul>
     </div>
   </div>
   </nav>
-
-  <!-- Small modal -->  
-  <div class="modal fade bs-example-modal-sm" id='myModal' tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
-      <div class="modal-content">      
-        <div class="modal-body">
-          <p>Reset all of your gambling history, <br/> are you really sure to do it?</p>
-        </div>
-        <div class="modal-footer">          
-          <button type="button" class="btn btn-link" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-link" onclick="window.location='/game/init'">Yes</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  
   <div class="container">
     <%if @error %>
       <div class="alert alert-error"><%=@error%></div>
@@ -51,6 +37,5 @@
   </div>
 
 
-</nav>
   </body>
 </html>

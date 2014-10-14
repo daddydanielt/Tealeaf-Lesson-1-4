@@ -22,3 +22,10 @@ form#stay_form{
   float: left;
 }
 
+.input_without_border{
+    border: none;
+}
+.bet{
+  width: 100px;
+  font-size:16px;
+}

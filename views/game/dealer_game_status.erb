@@ -1,0 +1,28 @@
+<div id='dealer_current_game_status' >
+  <h3><span class="label label-default">Dealer</span></h3>      
+  <%= Game::Dealer_picture %> 
+  <% if @dealer_game_status.hand %>
+    <% @dealer_game_status.hand.each_with_index do |card,i| %>
+      <% if GameStatus.is_dealer_turn?(@player_game_status) %>
+        <!-- # display all cards-->
+        <% src = Card.to_img_src(card) %>
+      <% else %>
+        <!-- # The first card needs to be covered. -->
+        <% src = (i== 0 ? Card::COVER  : Card.to_img_src(card)) %>
+      <% end %>
+      <img src="<%= src %>" width="50"/>
+    <% end %>
+  <% end %>
+        
+  <% if GameStatus.is_dealer_turn?(@player_game_status) %>
+    <div id="dealer_cards_total" style='padding-top:5px;'>
+      <span class="label label-info">Total = <%= @dealer_game_status.hand_total.to_s %></span>
+      <div style='padding-top:5px'>
+      <% if @dealer_game_status.is_blackjack? %> <span class="blackjack">BlackJack!</span></p>
+      <% elsif @dealer_game_status.is_twentyone? %> <span class="twentyone">TwentyOne!</span></p>
+      <% elsif @dealer_game_status.is_busted? %> <span class="busted">Busted!</span></p>
+      <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

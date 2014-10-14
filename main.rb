@@ -1,14 +1,12 @@
 require 'rubygems'
 require 'sinatra'
+require 'json/ext' # to use the C based extension instead of json/pure
 require 'pry' 
-
 
 use Rack::Session::Cookie, :key => 'rack.session',
                            :path => '/',
                            :secret => 'your_secret' 
-#set :sessions, true
-#set :session_secret, 'This is a secret key'
-  
+
 class Card 
   COVER ="/images/cards/cover.jpg" 
   class << self
@@ -44,60 +42,46 @@ end
 class Game
   Dealer_picture = "<img src='http://www.gravatar.com/avatar/7591cadea2328c5362c032df51246020' alt='dealer picture' class='img-circle'/>"
   Bet = 100
+
+  def self.hit_card(my_hand, deck)              
+    my_hand << Deck.flick_a_card!(deck)          
+  end
+
 end
 
-#------------------------>>
-helpers do 
+class GameStatus
 
-  def create_player
-    if params[:player_name].empty?
-      halt erb(:'player/create')
-    else
-      session[:player_name] = params[:player_name]              
-    end
+  attr_accessor :name, :hand
+
+  def self.is_dealer_turn?(player_game_satatus)
+    player_game_satatus.is_player_hit_stay? || player_game_satatus.is_busted? || player_game_satatus.is_blackjack? || player_game_satatus.is_twentyone?
   end
 
-  def initial_game (reset = false)       
-    # prepare Deck    
-    if reset
-      session[:deck] = []
-      session[:account] = 1000
-      session[:count_draw] = 0
-      session[:count_lose] = 0
-      session[:count_win]  = 0
-    else
-      session[:deck] ||= []
-      session[:account] ||= 1000
-      session[:count_draw] ||= 0
-      session[:count_lose] ||= 0
-      session[:count_win]  ||= 0
-    end    
-    session[:player_win_or_lose] = ""
-    
-    deck_cards = session[:deck] 
-    Deck.supplemnt_cards!(deck_cards) if !Deck.is_cards_enough?(deck_cards)  
-    
-    # deale cards - to player   
-    session[:player_hand]=[]
-    2.times { session[:player_hand] << Deck.flick_a_card!(session[:deck]) }
-    
-    # deale cards - to dealer
-    session[:dealer_hand]=[]
-    2.times { session[:dealer_hand] << Deck.flick_a_card!(session[:deck]) }
-
-    session[:player_stay] = false
+  def self.player_vs_dealer(player_hand, dealer_hand)
+    return 0 if player_hand.is_blackjack? && dealer_hand.is_blackjack? 
+    return 1 if player_hand.is_blackjack? && !dealer_hand.is_blackjack?
+    return 0 if player_hand.is_twentyone? && dealer_hand.is_twentyone?
+    return -1 if player_hand.is_twentyone? && dealer_hand.is_blackjack?    
+    return 1 if player_hand.is_twentyone? && !(dealer_hand.is_twentyone? || dealer_hand.is_blackjack?)
+    return -1 if player_hand.is_busted? 
+    return 1 if dealer_hand.is_busted? && player_hand.hand_total < 21
+    return -1 if (dealer_hand.is_twentyone? || dealer_hand.is_blackjack?) && player_hand.hand_total < 21              
+    return 0 if (player_hand.hand_total == dealer_hand.hand_total) && player_hand.hand_total < 21
+    return -1 if (player_hand.hand_total < dealer_hand.hand_total) && player_hand.hand_total < 21      
+    return 1 if (player_hand.hand_total > dealer_hand.hand_total) && player_hand.hand_total < 21
   end
 
-  def hit_card(my_hand)    
-      my_hand <<  Deck.flick_a_card!(session[:deck])          
+  def initialize(params = {})
+    @name = params[:name]
+    @hand = params[:hand]        
   end
 
-  def calculate_total(my_hand)    
+  def hand_total
     total = 0
     suit_Ace_count = 0    
-    return total if !my_hand    
+    return total if !@hand    
         
-    my_hand.each do |c|   
+    @hand.each do |c|   
       case c[1] 
         when "Jack","Queen","King" 
           total += 10
@@ -112,88 +96,208 @@ helpers do
     suit_Ace_count.times do 
       break if total <= 21
       total -= 10
-    end   
-    
+    end       
     return total
+  end
+
+  def is_blackjack?            
+    @hand && (@hand.count == 2 && self.hand_total ==21)
+  end
+  
+  def is_twentyone?       
+    @hand && (@hand.count > 2 && self.hand_total == 21)
+  end
+  
+  def is_busted?         
+    @hand && (self.hand_total > 21)
+  end
+
+  def is_equal_or_greater_than_17?    
+    @hand && (self.hand_total >= 17)
+  end
+  
+  def hand_status
+    return "blackjack" if is_blackjack?
+    return "twentyone" if is_twentyone?
+    return "busted" if is_busted?
+    return "total_over_17" if is_total_over_17?  
+    return ""
+  end
+end
+
+class PlayerGameSatatus < GameStatus
+  attr_accessor :bet, :account
+  def initialize(params={})  
+    super(params)
+    @account = params[:account]
+    @bet = params[:bet]    
+    @is_player_hit_stay = params[:is_player_hit_stay]
+  end
+
+  def is_player_hit_stay?    
+    @is_player_hit_stay
   end  
+end
 
-  def is_blackjack?(my_hand)         
-    return false if !my_hand    
-    my_hand.count == 2 && calculate_total(my_hand) ==21        
-  end
   
-  def is_twentyone?(my_hand)     
-    return false if !my_hand
-    my_hand.count > 2 && calculate_total(my_hand) == 21
-  end
-  
-  def is_busted?(my_hand)      
-    return false if !my_hand
-    calculate_total(my_hand) > 21
+#------------------------>>
+helpers do 
+
+  def create_player
+    if params[:player_name].empty?
+      halt erb(:'player/create')
+    else
+      session[:player_name] = params[:player_name]              
+    end
   end
 
-  def is_total_over_17?(my_hand)
-    false if !my_hand
-    calculate_total(my_hand) > 17
+  def initial_game (reset = false)           
+    # prepare session variables and set default value if it's a nil 
+    session[:deck] ||= []
+    session[:account] ||= 1000
+    session[:bet]  = -1
+    session[:count_draw] ||= 0
+    session[:count_lose] ||= 0
+    session[:count_win]  ||= 0
+
+    # reset whole game
+    if reset
+      session[:deck] = []
+      session[:account] = 1000
+      session[:bet] = -1
+      session[:count_draw] = 0
+      session[:count_lose] = 0
+      session[:count_win]  = 0        
+    end    
+    
+    session[:is_player_hit_stay] = false
+    session[:player_win_or_lose] = ""
+
+    Deck.supplemnt_cards!(session[:deck]) if !Deck.is_cards_enough?(session[:deck])  
+
+    # deale cards to player       
+    session[:player_hand] = []
+    2.times { session[:player_hand] << Deck.flick_a_card!(session[:deck]) }
+    
+    # deale cards to dealer
+    session[:dealer_hand] = []
+    2.times { session[:dealer_hand] << Deck.flick_a_card!(session[:deck]) }
+
+  end
+      
+  def dealer_game_status_erb
+    player_game_status = PlayerGameSatatus.new({:name => session[:player_name],\
+                                                 :hand => session[:player_hand],\
+                                                 :account => session[:account],\
+                                                 :bet => session[:bet],\
+                                                 :is_player_hit_stay => session[:is_player_hit_stay]})    
+
+    dealer_game_status = GameStatus.new({:name => "Daniel Tseng", :hand => session[:dealer_hand]})
+        
+    if GameStatus.is_dealer_turn?(player_game_status)  
+      while true                                             
+        if dealer_game_status.is_blackjack? || dealer_game_status.is_twentyone?\
+           || dealer_game_status.is_busted? || dealer_game_status.is_equal_or_greater_than_17?\
+           || player_game_status.is_busted? 
+          break                                  
+        end
+        Game.hit_card(session[:dealer_hand], session[:deck])
+      end
+    end
+
+    dealer_game_status_template = erb :'game/dealer_game_status', :layout => false
+    dealer_game_status_template ||= ""
   end
 
-  def get_cards_status(my_hand)
-    if is_blackjack?(my_hand)
-      "blackjack"
-    elsif is_twentyone?(my_hand) 
-      "twentyone"
-    elsif is_busted?(my_hand)
-      "busted"
-    elsif is_total_over_17?(my_hand)
-      "total_over_17"
+  def player_game_status_erb
+    player_game_status = PlayerGameSatatus.new({:name => session[:player_name],\
+                                             :hand => session[:player_hand],\
+                                             :account => session[:account],\
+                                             :bet => session[:bet],\
+                                             :is_player_hit_stay => session[:is_player_hit_stay]})
+
+    player_game_status_template = erb :'game/player_game_status', :layout => false                       
+    player_game_status_template ||= ""
+  end
+
+  def place_bet_erb
+     erb :'game/place_bet', :layout => false 
+  end
+
+  def game_result_erb
+    player_game_status = PlayerGameSatatus.new({:name => session[:player_name],\
+                                             :hand => session[:player_hand],\
+                                             :account => session[:account],\
+                                             :bet => session[:bet],\
+                                             :is_player_hit_stay => session[:is_player_hit_stay]})    
+
+    dealer_game_status = GameStatus.new({:name => "Daniel Tseng", :hand => session[:dealer_hand]})
+    
+    if player_game_status.is_player_hit_stay? \
+       || player_game_status.is_blackjack? \
+       || player_game_status.is_twentyone? \
+       || player_game_status.is_busted?
+
+      case GameStatus.player_vs_dealer(player_game_status, dealer_game_status)
+      when 0
+        player_win_or_lose = "Draw game."
+      when -1
+        player_win_or_lose = "Sorry, you lose."
+      when 1
+        player_win_or_lose = "Congratulation, you win."
+      end    
+      erb :'game/game_result', :layout => false
     else
       ""
     end
   end
 
-  def is_dealer_turn?        
-    (@player_stay || is_busted?(@player_hand) || is_blackjack?(@player_hand) || is_twentyone?(@player_hand)) ? true : false      
+  def game_erb
+    {:dealer_game_status => dealer_game_status_erb,\
+     :player_game_status => player_game_status_erb,\
+     :bet => place_bet_erb,\
+     :game_result => game_result_erb}
   end
 
+  def game_info_refresh
+    player_game_status = PlayerGameSatatus.new({:name => session[:player_name],\
+                                             :hand => session[:player_hand],\
+                                             :account => session[:account],\
+                                             :bet => session[:bet],\
+                                             :is_player_hit_stay => session[:is_player_hit_stay]})
 
-  def player_win_draw_lose(player_hand,dealer_hand)    
-    if is_blackjack?(dealer_hand)
-      if is_blackjack?(player_hand)
-       return 0
-      else
-        return -1
+    dealer_game_status = GameStatus.new({:name => "Daniel Tseng", :hand => session[:dealer_hand]})
+        
+    if GameStatus.is_dealer_turn?(player_game_status)  
+      while true                                             
+        if dealer_game_status.is_blackjack? || dealer_game_status.is_twentyone?\
+           || dealer_game_status.is_busted? || dealer_game_status.is_equal_or_greater_than_17?\
+           || player_game_status.is_busted? 
+          break                                  
+        end
+        Game.hit_card(session[:dealer_hand], session[:deck])
       end
     end
 
-    if is_twentyone?(dealer_hand)
-      if is_blackjack?(player_hand)
-        return 1
-      elsif is_twentyone?(player_hand)
-        return 0  
-      else
-        return -1
-      end        
+    if player_game_status.is_player_hit_stay? \
+       || player_game_status.is_blackjack? \
+       || player_game_status.is_twentyone? \
+       || player_game_status.is_busted?
+      case GameStatus.player_vs_dealer(player_game_status, dealer_game_status)
+      when 0
+        player_win_or_lose = "Draw game."
+      when -1
+        player_win_or_lose = "Sorry, you lose."
+      when 1
+        player_win_or_lose = "Congratulation, you win."
+      end
+    else
+      player_win_or_lose = ""
     end
 
-    if is_busted?(dealer_hand)
-      if is_busted?(player_hand)
-        return 0
-      else
-        return 1
-      end
-    end
-
-    if (calculate_total(dealer_hand) < 21)
-      if is_busted?(player_hand)
-        return -1
-      elsif (is_blackjack?(player_hand) || is_twentyone?(player_hand))
-        return 1
-      else
-        return -1 if (calculate_total(dealer_hand) > calculate_total(player_hand)) 
-        return 0 if (calculate_total(dealer_hand) == calculate_total(player_hand)) 
-      return 1 if (calculate_total(dealer_hand) < calculate_total(player_hand)) 
-      end
-    end
+    {:player_game_status => player_game_status,\
+     :dealer_game_status => dealer_game_status,\
+     :player_win_or_lose => player_win_or_lose}
   end
 
 end
@@ -224,85 +328,29 @@ post '/player/create' do
   redirect 'game/welcome'
 end
 
-post '/player/hit' do 
-  @player_hand = session[:player_hand]
-  hit_card(@player_hand)      
-  if is_busted?(@player_hand) || is_blackjack?(@player_hand) || is_twentyone?(@player_hand) 
-    session[:player_stay] = true
-  end
-  redirect :'game'
+post '/player/hit' do     
+  Game.hit_card(session[:player_hand], session[:deck])  
+  game_info = game_info_refresh
+  @player_game_status = game_info[:player_game_status]
+  @dealer_game_status = game_info[:dealer_game_status]
+  @player_win_or_lose = game_info[:player_win_or_lose]  
+  game_erb.to_json
 end
 
 post '/player/stay' do     
-  session[:player_stay] = true
-  redirect :'game'
-end
-
-get '/game' do  
-  
-  @player_name = session[:player_name]    
-  redirect '/player' if !@player_name
-
-  @deck = session[:deck]    
-  @player_hand = session[:player_hand]     
-  @dealer_hand = session[:dealer_hand]      
-  redirect '/game/init' if !@deck || !@player_hand || !@dealer_hand
-
-  @player_total = calculate_total(@player_hand)    
-  @player_cards_status= get_cards_status(@player_hand) unless !@player_hand
-  @player_stay = session[:player_stay]
-        
-  # check if it's dealer's turn or not
-  if is_dealer_turn?            
-      while true 
-        @dealer_cards_status= get_cards_status(@dealer_hand) unless !@dealer_hand          
-        if !( is_busted?(@player_hand) || is_blackjack?(@player_hand) ) && @dealer_cards_status.empty?           
-          hit_card(@dealer_hand)      
-        else
-          break
-        end
-      end         
-      @dealer_total = calculate_total(@dealer_hand)          
-            
-      # handle cards comparision of both dealer and player in erb.
-      if session[:player_win_or_lose] && session[:player_win_or_lose].empty?         
-        case player_win_draw_lose(@player_hand,@dealer_hand)
-        when 0
-          session[:player_win_or_lose]  = "Draw game."
-          session[:count_draw] += 1
-        when 1 
-          session[:player_win_or_lose]  = "Congratulation, you win!"
-          session[:account] += Game::Bet
-          session[:count_win] += 1
-        when -1
-          session[:player_win_or_lose]  = "Sorry, you lose!"
-          session[:account] -= Game::Bet
-          session[:count_lose] += 1
-        end     
-      end      
-      @player_win_or_lose =  session[:player_win_or_lose] 
-  end
-  
-  @account = session[:account]     
-  
-  erb :'game/play'
-end
-
-get '/game/init' do
-  initial_game(true)
-  redirect :'game'
-end
-
-get '/game/play_again' do
-  session[:press_play_again] = true
-  session[:is_dealer_checked] = false
-  initial_game
-  redirect :'game'
+  session[:is_player_hit_stay] = true  
+  # I am here.
+  #-> determine player win_or_lose
+  #-> calculate account  
+  game_info = game_info_refresh
+  @player_game_status = game_info[:player_game_status]
+  @dealer_game_status = game_info[:dealer_game_status]
+  @player_win_or_lose = game_info[:player_win_or_lose] 
+  game_erb.to_json
 end
 
 get '/game/welcome' do  
   if !session[:player_name] || session[:player_name].empty? 
-    #halt erb(:'player/create')
     redirect 'player'
   else
     initial_game(true)
@@ -312,7 +360,48 @@ get '/game/welcome' do
   end
 end
 
+get '/game/start_a_new_game' do
+  initial_game(true)
+  redirect '/game'
+end
+
+get '/game' do  
+  #--->
+  @player_name = session[:player_name]    
+  redirect '/player' if !@player_name
+  @deck = session[:deck]    
+  @player_hand = session[:player_hand]     
+  @dealer_hand = session[:dealer_hand]      
+  redirect '/game/init' if !@deck || !@player_hand || !@dealer_hand
+  #--->  
+  
+  game_info = game_info_refresh
+  @player_game_status = game_info[:player_game_status]
+  @dealer_game_status = game_info[:dealer_game_status]
+  @player_win_or_lose = game_info[:player_win_or_lose] 
+  erb :'game/play'  
+end
+
+post '/game/play_again' do      
+  initial_game  
+  game_info = game_info_refresh
+  @player_game_status = game_info[:player_game_status]
+  @dealer_game_status = game_info[:dealer_game_status]
+  @player_win_or_lose = game_info[:player_win_or_lose] 
+  erb :'game/play'  
+end
+
+post '/game/place_bet' do     
+  session[:bet] = params[:bet].to_i  
+  game_info = game_info_refresh
+  @player_game_status = game_info[:player_game_status]
+  @dealer_game_status = game_info[:dealer_game_status]
+  @player_win_or_lose = game_info[:player_win_or_lose]  
+  erb :'game/play'  
+end
+
 #------------------------>>
+
 
 
 

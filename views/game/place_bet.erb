@@ -1,0 +1,31 @@
+<div id="place_bet_div" style="width:300px;">   
+ 
+  <div class="row-fluid">
+    <div style="font-size:24px; padding-bottom:10px;">      
+        <span class="label label-default"><%= @player_game_status.name %></span>
+        <span class='label label-warning'>Money = $<%= @player_game_status.account %></span>            
+    </div>
+  </div>
+  
+  <p>
+     constraint: zero < bet <= Your money
+  </p>
+
+  <div class="input-group" style="width:150px;">
+    <span class="input-group-addon input_without_border">Bet</span>
+    <input id="input_bet" title="bet!" type="text" class="form-control input_without_border" 
+           placeholder="$" required="true" autofocus="true" style="width:100px;" data-placement="right" 
+           data-toggle="tooltip" />
+    <button type="button" class="btn btn-default btn-s" id="player_place_bet" style="width:100px">Ok</button>
+  </div>
+  <div id="div_warning_place_bet"><h3><span class="label label-danger">Place your bet, please.</span></h3></div>  
+  <script>
+  $(document).ready(function(){
+    $("#div_warning_place_bet").hide();    
+    $("#input_bet").mouseover(function() {
+      $("#div_warning_place_bet").fadeOut("1000");
+    });
+  });
+  </script>
+</div>
+

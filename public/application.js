@@ -88,6 +88,6 @@ function validate_player_bet(){
     ret_flag = false;
   }
   else
-    ret_flag = true;  d
+    ret_flag = true;  
   return ret_flag;
 }

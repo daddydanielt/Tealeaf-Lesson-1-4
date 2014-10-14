@@ -17,12 +17,7 @@
   <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container-fluid">    
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-      <ul class="nav navbar-nav">        
-        <% #@nav_class ='' %>
-        <% #if !@player_name || @player_name.empty? %>
-        <% # @nav_class ='disabled'%>
-        <% #end %>        
-        <!-- <li><a href="/player">Profile</a></li> -->
+      <ul class="nav navbar-nav">               
         <li><a href="/game/start_a_new_game" id="link_start_a_new_game">Start_a_new_game</a></li>
       </ul>
     </div>
@@ -35,7 +30,6 @@
     <% end %>  
     <%= yield %>
   </div>
-
-
+  
   </body>
 </html>

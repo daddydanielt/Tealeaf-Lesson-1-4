@@ -39,6 +39,8 @@ function player_play_again(event){
   })
   .done(function(msg){
     $('#game_screen').replaceWith(msg);       
+    $('#game_screen').hide();     
+    $('#game_screen').fadeIn('slow'); 
   })  
 }
 
